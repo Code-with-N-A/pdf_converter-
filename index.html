@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced PDF Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 50px;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      font-family: 'Courier New', monospace;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+
+    #previewButton {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    #downloadButton {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    #clearButton {
+      background-color: #dc3545;
+      color: #fff;
+    }
+
+    iframe {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+    }
+
+    .toolbar {
+      margin-bottom: 20px;
+    }
+
+    .toolbar button {
+      margin-right: 10px;
+    }
+
+    .font-size-select, .font-style-select {
+      margin-bottom: 10px;
+    }
+
+    .color-select, .background-color-select {
+      margin-bottom: 10px;
+    }
+
+    .language-select {
+      margin-bottom: 20px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Advanced PDF Generator</h2>
+
+    <!-- Language Selector -->
+    <div class="language-select">
+      <label for="language">Select Language: </label>
+      <select id="language" onchange="updateLanguage()">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+      </select>
+    </div>
+
+    <!-- Font Style and Size -->
+    <div class="font-style-select">
+      <label for="fontStyle">Select Font: </label>
+      <select id="fontStyle">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+    </div>
+
+    <div class="font-size-select">
+      <label for="fontSize">Select Font Size: </label>
+      <select id="fontSize">
+        <option value="12">12px</option>
+        <option value="16">16px</option>
+        <option value="20">20px</option>
+      </select>
+    </div>
+
+    <!-- Text Formatting -->
+    <div class="toolbar">
+      <button onclick="makeBold()">Bold</button>
+      <button onclick="makeItalic()">Italic</button>
+      <button onclick="makeUnderline()">Underline</button>
+    </div>
+
+    <!-- Text Color & Background Color -->
+    <div class="color-select">
+      <label for="textColor">Select Text Color: </label>
+      <input type="color" id="textColor" value="#000000">
+    </div>
+
+    <div class="background-color-select">
+      <label for="bgColor">Select Background Color: </label>
+      <input type="color" id="bgColor" value="#ffffff">
+    </div>
+
+    <!-- Text Alignment -->
+    <div class="alignment-select">
+      <label for="alignment">Text Alignment: </label>
+      <select id="alignment">
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+      </select>
+    </div>
+
+    <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+
+    <!-- Preview and Download Buttons -->
+    <div>
+      <button id="previewButton">Preview PDF</button>
+      <button id="downloadButton">Download PDF</button>
+      <button id="clearButton">Clear</button>
+    </div>
+
+    <!-- PDF Preview -->
+    <iframe id="pdfPreview" style="display:none;"></iframe>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    const { jsPDF } = window.jspdf;
+
+    // Update text direction based on language
+    function updateLanguage() {
+      const lang = document.getElementById('language').value;
+      if (lang === 'hi') {
+        document.getElementById('textInput').setAttribute('dir', 'rtl');
+      } else {
+        document.getElementById('textInput').setAttribute('dir', 'ltr');
+      }
+    }
+
+    // Save text to localStorage
+    function saveToLocalStorage() {
+      const text = document.getElementById('textInput').value;
+      localStorage.setItem('textInput', text);
+    }
+
+    // Load text from localStorage
+    function loadFromLocalStorage() {
+      const savedText = localStorage.getItem('textInput');
+      if (savedText) {
+        document.getElementById('textInput').value = savedText;
+      }
+    }
+
+    // Text formatting functions
+    function makeBold() {
+      document.getElementById('textInput').style.fontWeight = document.getElementById('textInput').style.fontWeight === 'bold' ? 'normal' : 'bold';
+      saveToLocalStorage();
+    }
+
+    function makeItalic() {
+      document.getElementById('textInput').style.fontStyle = document.getElementById('textInput').style.fontStyle === 'italic' ? 'normal' : 'italic';
+      saveToLocalStorage();
+    }
+
+    function makeUnderline() {
+      document.getElementById('textInput').style.textDecoration = document.getElementById('textInput').style.textDecoration === 'underline' ? 'none' : 'underline';
+      saveToLocalStorage();
+    }
+
+    // Function to add text to PDF with multiple page support
+    function addTextToPDF(pdf, text, font, fontSize, alignment, textColor, bgColor) {
+      const lines = pdf.splitTextToSize(text, 180);
+      let y = 10;
+
+      pdf.setFont(font);
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(textColor);
+      pdf.setFillColor(bgColor);
+
+      for (let i = 0; i < lines.length; i++) {
+        if (y > 280) {
+          pdf.addPage();
+          y = 10;
+        }
+        pdf.text(lines[i], 10, y, { align: alignment });
+        y += 10;
+      }
+    }
+
+    // Preview PDF
+    document.getElementById('previewButton').addEventListener('click', function() {
+      const text = document.getElementById('textInput').value;
+      const font = document.getElementById('fontStyle').value;
+      const fontSize = parseInt(document.getElementById('fontSize').value);
+      const alignment = document.getElementById('alignment').value;
+      const textColor = document.getElementById('textColor').value;
+      const bgColor = document.getElementById('bgColor').value;
+
+      if (text.trim() === '') {
+        alert('Please enter some text.');
+        return;
+      }
+
+      const pdf = new jsPDF();
+      addTextToPDF(pdf, text, font, fontSize, alignment, textColor, bgColor);
+      const pdfData = pdf.output('datauristring');
+      document.getElementById('pdfPreview').style.display = 'block';
+      document.getElementById('pdfPreview').src = pdfData;
+    });
+
+    // Download PDF
+    document.getElementById('downloadButton').addEventListener('click', function() {
+      const text = document.getElementById('textInput').value;
+      const font = document.getElementById('fontStyle').value;
+      const fontSize = parseInt(document.getElementById('fontSize').value);
+      const alignment = document.getElementById('alignment').value;
+      const textColor = document.getElementById('textColor').value;
+      const bgColor = document.getElementById('bgColor').value;
+
+      if (text.trim() === '') {
+        alert('Please enter some text.');
+        return;
+      }
+
+      const pdf = new jsPDF();
+      addTextToPDF(pdf, text, font, fontSize, alignment, textColor, bgColor);
+      pdf.save('generated.pdf');
+    });
+
+    // Clear the input and preview
+    document.getElementById('clearButton').addEventListener('click', function() {
+      document.getElementById('textInput').value = '';
+      document.getElementById('pdfPreview').style.display = 'none';
+      localStorage.removeItem('textInput');
+    });
+
+    // Load saved text when the page loads
+    window.onload = loadFromLocalStorage;
+  </script>
+
+</body>
+</html>
